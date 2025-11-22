@@ -21,13 +21,20 @@ export function Navbar() {
                             url="#"
                         />
                     </div>
+                    <div className="flex items-center space-x-2">
+                        <Button 
+                            txt="LogIn" 
+                            styles="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                            url="./login"
+                        />
+                    </div>
 
-                    
                     <div>
                         <p className="text-lg font-medium hover:text-red-500 cursor-pointer transition-colors">
                             carrito
                         </p>
                     </div>
+                    
                 </nav>
             </header>
         </>
