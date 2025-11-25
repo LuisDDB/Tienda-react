@@ -1,36 +1,20 @@
-import { Button } from './Button';
+// src/components/Card.jsx
+import { Link } from "react-router-dom";
 
-export function Card({ source, altTxt, nameProduct, descriptionProdcut, stock , seller, category }) {
-    return (
-        <>
-            <div className="bg-white shadow-lg border border-gray-200 
-            rounded-xl overflow-hidden m-4 w-64 
-            flex flex-col items-center transition-transform hover:scale-105 hover:shadow-2xl">
-                
-                
-                <div className="w-full overflow-hidden flex justify-center items-center bg-black">
-                    <img 
-                        src={source} 
-                        alt={altTxt} 
-                        className="object-cover w-full hover:opacity-90 transition-opacity" 
-                    />
-                </div>
+export function Card({ id, name, price, stock }) {
+  return (
+    <div className="flex flex-col gap-2 p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition bg-white">
+      <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
+      <p className="text-red-600 font-bold text-lg">${price}</p>
+      <p className="text-sm text-slate-600">Stock: {stock}</p>
 
-                
-                <div className="flex flex-col items-center p-4 text-center">
-                    <h3 className="text-lg font-semibold text-black">{nameProduct}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{descriptionProdcut}</p>
-                    <p>{stock}</p>
-                    <p>{category}</p>
-                    <p>{seller}</p>
-                    
-                    <Button 
-                        txt="Comprar" 
-                        styles="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors shadow-md"
-                        url="/producto"
-                    />
-                </div>
-            </div>
-        </>
-    )
+      <Link
+        to={`/product/${id}`}
+        className="mt-2 inline-flex justify-center rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 transition"
+      >
+        Ver detalles
+      </Link>
+    </div>
+  );
 }
+

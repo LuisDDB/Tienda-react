@@ -1,31 +1,29 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom"; // Corregido: importación de 'react-router-dom'
-import { CartProvider } from "./context/CartContext"; // Importar el Proveedor
+import { Routes, Route } from "react-router-dom";
+import { CartProvider } from "./context/CartContext";
 
-// Pages imports
+// Pages
 import { Home } from "./pages/Home";
+import { Product } from "./pages/Product";
 
-// Components imports
+// Components
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
-import { CartAside } from "./components/CartAside"; // Importar el nuevo carrito
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Home />,
-  }
-]);
+import { CartAside } from "./components/CartAside"; 
 
 function App() {
-
   return (
     <CartProvider>
       <Navbar />
-      <RouterProvider router={router} />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/product/:id" element={<Product />} />
+      </Routes>
+
       <Footer />
       <CartAside />
     </CartProvider>
-  )
+  );
 }
 
 export default App;
