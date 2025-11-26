@@ -1,4 +1,4 @@
-import { SearchBar } from "./SearchrBar";
+import { SearchrBar } from "./SearchrBar";
 import { Button } from "./Button";
 import { useCart } from "../context/CartContext"; // Importar el hook
 
@@ -19,7 +19,7 @@ export function Navbar() {
                     
                     
                     <div className="flex items-center space-x-2">
-                        <SearchBar txtHolder="Buscar producto" />
+                        <SearchrBar txtHolder="Buscar producto" />
                         <Button 
                             txt="Buscar" 
                             styles="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"

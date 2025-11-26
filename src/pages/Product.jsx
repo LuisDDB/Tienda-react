@@ -2,6 +2,7 @@
 import { useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext";  // <-- Importante
 
+
 const products = [
   {
     id: "1",
