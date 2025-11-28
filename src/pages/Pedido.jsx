@@ -10,7 +10,7 @@ const Pedido = () => {
   const [error, setError] = useState(false);
 
   // ID de la orden: el valor de '10' es el que se usa actualmente
-  const orderId = 10; 
+  const orderId = 1; 
 
   const cargarDatos = async () => {
     try {
