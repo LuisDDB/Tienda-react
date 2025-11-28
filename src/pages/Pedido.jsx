@@ -1,87 +1,99 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+// Asegúrate de que API_URL se importa correctamente desde tu archivo config
+import { API_URL } from "../config"; 
 
 const Pedido = () => {
-  // Datos de ejemplo (reemplaza con tu backend cuando quieras)
-  const pedidos = [
-    { id: 1, nombre: "Camiseta Medusa", cantidad: 2, precio: 20, estado: "Pendiente" },
-    { id: 2, nombre: "Sudadera Azul",  cantidad: 1, precio: 45, estado: "Completado" },
-    { id: 3, nombre: "Gorra Negra",     cantidad: 3, precio: 15, estado: "Cancelado" },
-  ];
+  const [items, setItems] = useState([]);
+  const [estado, setEstado] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Función para formatear moneda (opcional)
-  const formatoMoneda = (n) => `$${Number(n).toFixed(2)}`;
+  // ID de la orden: el valor de '10' es el que se usa actualmente
+  const orderId = 10; 
 
-  // Total general del pedido (suma de totales por producto)
-  const totalGeneral = pedidos.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const cargarDatos = async () => {
+    try {
+      // Usando backticks (`) para la plantilla de cadena en fetch
+      const res = await fetch(`${API_URL}/pedido-items.php?order_id=${orderId}`);
 
-  return (
-    <div className="min-h-screen bg-white px-6 py-10">
-      {/* Encabezado tipo tu sitio */}
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-center text-4xl font-extrabold text-red-500 mb-8">Pedido</h1>
+      // Si la API no responde correctamente
+      if (!res.ok) {
+        setError(true);
+        setCargando(false);
+        return;
+      }
 
-        <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-2xl font-semibold text-gray-800">Productos en el pedido</h2>
-            <p className="text-sm text-gray-500 mt-1">Revisa los productos, cantidades y el estado.</p>
-          </div>
+      const data = await res.json();
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px]">
-              <thead className="bg-red-500 text-white">
-                <tr>
-                  <th className="py-3 px-4 text-left">ID</th>
-                  <th className="py-3 px-4 text-left">Producto</th>
-                  <th className="py-3 px-4 text-left">Cantidad</th>
-                  <th className="py-3 px-4 text-left">Precio unit.</th>
-                  <th className="py-3 px-4 text-left">Precio total</th>
-                  <th className="py-3 px-4 text-left">Estado</th>
-                </tr>
-              </thead>
+      // Si la API no envía items o está vacío
+      if (!data || !data.items || data.items.length === 0) {
+        setError(true);
+        setCargando(false);
+        return;
+      }
 
-              <tbody className="bg-white">
-                {pedidos.map((p) => (
-                  <tr key={p.id} className="border-b last:border-b-0 hover:bg-gray-50 transition">
-                    <td className="py-4 px-4 text-sm text-gray-700">{p.id}</td>
+      setItems(data.items);
+      setEstado(data.estado || "Sin estado");
+      setCargando(false);
+      
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+      setError(true);
+      setCargando(false);
+    }
+  };
 
-                    <td className="py-4 px-4">
-                      <div className="font-medium text-gray-900">{p.nombre}</div>
-                    </td>
+  useEffect(() => {
+    cargarDatos();
+  }, []);
 
-                    <td className="py-4 px-4 text-gray-700">{p.cantidad}</td>
+  // 1. Mensaje de Carga
+  if (cargando) {
+    // Texto simple envuelto en un div
+    return <div className="p-4 text-center">Cargando datos...</div>;
+  }
 
-                    <td className="py-4 px-4 text-gray-700">{formatoMoneda(p.precio)}</td>
-
-                    <td className="py-4 px-4 font-semibold">{formatoMoneda(p.precio * p.cantidad)}</td>
-
-                    <td className="py-4 px-4">
-                      <span
-                        className={
-                          "inline-block px-3 py-1 text-sm font-medium rounded-full " +
-                          (p.estado === "Completado"
-                            ? "bg-green-100 text-green-800"
-                            : p.estado === "Pendiente"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800")
-                        }
-                      >
-                        {p.estado}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="px-6 py-4 border-t flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Productos: <span className="font-medium text-gray-800">{pedidos.length}</span></p>
-            </div>
-
-          </div>
-        </div>
+  // 2. Mensaje de Error (con estilos de centrado y resaltado de Tailwind CSS)
+  if (error) {
+    return (
+      // Contenedor para centrar el contenido vertical y horizontalmente en toda la pantalla
+      <div className="flex items-center justify-center min-h-screen"> 
+        {/* Estilos para el texto: text-4xl (grande), font-bold (resaltado) y text-black */}
+        <p className="text-4xl font-bold text-black">
+          No hay pedidos pendientes
+        </p>
       </div>
+    );
+  }
+
+  // 3. Contenido Principal del Pedido
+  return (
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Pedido #{orderId}</h1> 
+      <h2 className="text-lg font-semibold mb-2">Estado: {estado}</h2>
+
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border p-2">Producto</th>
+            <th className="border p-2">Cantidad</th>
+            <th className="border p-2">Precio Unit.</th>
+            <th className="border p-2">Descuento</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.order_item_id}>
+              <td className="border p-2">{item.producto}</td>
+              <td className="border p-2 text-center">{item.cantidad}</td>
+              <td className="border p-2 text-center">${item.precio_unitario}</td>
+              <td className="border p-2 text-center">${item.descuento}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
