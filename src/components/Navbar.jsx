@@ -41,6 +41,11 @@ export function Navbar() {
                         >
                             Pagos
                         </button>
+                          <Button 
+                            txt="Mi pedido" 
+                            styles="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                            url="./pedido"
+                        />
                        
                         
                     </div>
