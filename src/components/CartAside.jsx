@@ -1,12 +1,13 @@
-import { useCart } from "../context/CartContext"; 
+import { useCart } from "../context/CartContext";
+import { Link } from "react-router-dom";
 
 export function CartAside() {
-    const { 
-        isCartOpen, 
-        toggleCart, 
-        cartItems, 
-        removeItem, 
-        clearCart 
+    const {
+        isCartOpen,
+        toggleCart,
+        cartItems,
+        removeItem,
+        clearCart
     } = useCart();
 
     const asideClasses = `
@@ -27,8 +28,8 @@ export function CartAside() {
 
     return (
         <>
-            <div 
-                className={overlayClasses} 
+            <div
+                className={overlayClasses}
                 onClick={toggleCart}
             ></div>
 
@@ -37,19 +38,19 @@ export function CartAside() {
                     <h2 className="text-2xl font-bold text-red-500">
                         Carrito
                     </h2>
-                    
-                    <button 
+
+                    <button
                         onClick={toggleCart}
                         className="text-gray-600 hover:text-red-500 transition-colors"
                         aria-label="Cerrar carrito"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                                  d="M6 18L18 6M6 6l12 12" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                
+
                 <div className="p-4 overflow-y-auto h-full pb-40">
 
                     {cartItems.length === 0 && (
@@ -57,7 +58,7 @@ export function CartAside() {
                     )}
 
                     {cartItems.map(item => (
-                        <div 
+                        <div
                             key={item.id}
                             className="mt-4 p-3 border rounded-lg flex justify-between items-center"
                         >
@@ -70,10 +71,10 @@ export function CartAside() {
 
                             <div className="flex flex-col items-end">
                                 <p className="font-bold">
-                                    ${ (item.price * item.quantity).toFixed(2) }
+                                    ${(item.price * item.quantity).toFixed(2)}
                                 </p>
 
-                                <button 
+                                <button
                                     onClick={() => removeItem(item.id)}
                                     className="text-red-500 text-sm mt-1 hover:underline"
                                 >
@@ -92,7 +93,7 @@ export function CartAside() {
                     </div>
 
                     {cartItems.length > 0 && (
-                        <button 
+                        <button
                             onClick={clearCart}
                             className="w-full bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 transition-colors font-semibold mb-3"
                         >
@@ -100,9 +101,22 @@ export function CartAside() {
                         </button>
                     )}
 
-                    <button className="w-full bg-red-500 text-white py-3 rounded-md hover:bg-red-600 transition-colors font-semibold">
-                        Finalizar Compra
-                    </button>
+                    <Link
+                        to={cartItems.length > 0 ? "/checkout/payment" : "#"}
+                        onClick={(e) => {
+                            if (cartItems.length === 0) {
+                                e.preventDefault(); // Bloquea la navegación
+                                return;
+                            }
+                            toggleCart(); // Solo si hay items
+                        }}
+                        className={`block text-center mt-1 font-semibold px-4 py-2 rounded-md transition-colors
+                                ${cartItems.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                            } `}
+                    >
+                        Comprar
+                    </Link>
                 </div>
 
             </aside>
