@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import { Home } from "./pages/Home";
 import { LogIn } from "./pages/LogIn";
 import Pedido from "./pages/Pedido";
+import Registro from "./pages/Registro";
 
 // Components imports
 import { Navbar } from "./components/Navbar";
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
     path: "/pedido",
     element: <Pedido />,
   },
+  {
+    path: "/registro",
+    element: <Registro />,
+  }
 ]);
 
 function App() {
