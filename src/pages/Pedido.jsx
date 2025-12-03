@@ -1,101 +1,111 @@
 import React, { useEffect, useState } from "react";
 
-// Asegúrate de que API_URL se importa correctamente desde tu archivo config
-const API_URL = "http://localhost:8000/api/registro.php";
+// URL de la API de pedidos
+const API_URL = "http://localhost:8000/api/pedidoEstado.php";
 
 const Pedido = () => {
-  const [items, setItems] = useState([]);
-  const [estado, setEstado] = useState("");
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(false);
+    // ------------------------------------
+    // Estado
+    // ------------------------------------
+    // Solo necesitamos el estado de carga/error y el estado del pedido.
+    const [estado, setEstado] = useState(null); 
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState(false);
 
-  // ID de la orden: el valor de '10' es el que se usa actualmente
-  const orderId = 1; 
+    // ID de la orden que queremos consultar (esto debería venir de la URL o del estado de la aplicación)
+    // Usamos '1' como ejemplo fijo.
+    const orderId = 1; 
 
-  const cargarDatos = async () => {
-    try {
-      // Usando backticks (`) para la plantilla de cadena en fetch
-      const res = await fetch(`${API_URL}/pedido-items.php?order_id=${orderId}`);
+    // ------------------------------------
+    // Lógica de Carga de Datos
+    // ------------------------------------
+    const cargarDatos = async () => {
+        try {
+            // FIX: La URL de fetch apunta directamente a la API de pedido con el ID como parámetro GET.
+            const res = await fetch(`${API_URL}?id=${orderId}`);
 
-      // Si la API no responde correctamente
-      if (!res.ok) {
-        setError(true);
-        setCargando(false);
-        return;
-      }
+            // 404 de la API (Pedido no encontrado)
+            if (!res.ok) {
+                setError(true);
+                setCargando(false);
+                return;
+            }
 
-      const data = await res.json();
+            const data = await res.json();
 
-      // Si la API no envía items o está vacío
-      if (!data || !data.items || data.items.length === 0) {
-        setError(true);
-        setCargando(false);
-        return;
-      }
+            // Si la API devuelve un mensaje de error o los datos están vacíos
+            if (!data || data.mensaje || !data.order_id) { 
+                setError(true);
+                setCargando(false);
+                return;
+            }
+            
+            // FIX: Extraemos el 'estado' directamente del objeto 'data'
+            setEstado(data.estado);
+            setCargando(false);
+            
+        } catch (error) {
+            console.error("Error cargando datos:", error);
+            setError(true);
+            setCargando(false);
+        }
+    };
 
-      setItems(data.items);
-      setEstado(data.estado || "Sin estado");
-      setCargando(false);
-      
-    } catch (error) {
-      console.error("Error cargando datos:", error);
-      setError(true);
-      setCargando(false);
+    useEffect(() => {
+        cargarDatos();
+    }, []);
+
+    // ------------------------------------
+    // Renderizado Condicional
+    // ------------------------------------
+
+    // 1. Mensaje de Carga
+    if (cargando) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <p className="text-xl font-semibold text-blue-600">
+                    Cargando estado del pedido...
+                </p>
+            </div>
+        );
     }
-  };
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+    // 2. Mensaje de Error
+    if (error || estado === null) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50"> 
+                <p className="text-2xl font-bold text-red-600 p-8 bg-white rounded-xl shadow-lg">
+                    ⚠️ Error: Pedido #{orderId} no encontrado o sin datos.
+                </p>
+            </div>
+        );
+    }
 
-  // 1. Mensaje de Carga
-  if (cargando) {
-    // Texto simple envuelto en un div
-    return <div className="p-4 text-center">Cargando datos...</div>;
-  }
-
-  // 2. Mensaje de Error (con estilos de centrado y resaltado de Tailwind CSS)
-  if (error) {
+    // 3. Contenido Principal: SOLO MUESTRA EL ESTADO (Según tu solicitud)
     return (
-      // Contenedor para centrar el contenido vertical y horizontalmente en toda la pantalla
-      <div className="flex items-center justify-center min-h-screen"> 
-        {/* Estilos para el texto: text-4xl (grande), font-bold (resaltado) y text-black */}
-        <p className="text-4xl font-bold text-black">
-          No hay pedidos pendientes
-        </p>
-      </div>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 text-center space-y-6">
+                
+                <h1 className="text-4xl font-extrabold text-gray-800">
+                    Tu Pedido #{orderId}
+                </h1>
+                
+                {/* ESTADO DESTACADO */}
+                <div className="p-5 rounded-lg border-4 border-yellow-400 bg-yellow-50 shadow-inner">
+                    <p className="text-lg font-medium text-gray-600 mb-1">
+                        ESTADO ACTUAL
+                    </p>
+                    <h2 className="text-5xl font-black uppercase text-yellow-700">
+                        {estado}
+                    </h2>
+                </div>
+                
+                <p className="text-sm text-gray-500 mt-4">
+                    Para ver el detalle de los productos, usa otra ruta o añade un botón "Ver detalles".
+                </p>
+            </div>
+        </div>
     );
-  }
-
-  // 3. Contenido Principal del Pedido
-  return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Pedido #{orderId}</h1> 
-      <h2 className="text-lg font-semibold mb-2">Estado: {estado}</h2>
-
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">Producto</th>
-            <th className="border p-2">Cantidad</th>
-            <th className="border p-2">Precio Unit.</th>
-            <th className="border p-2">Descuento</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.order_item_id}>
-              <td className="border p-2">{item.producto}</td>
-              <td className="border p-2 text-center">{item.cantidad}</td>
-              <td className="border p-2 text-center">${item.precio_unitario}</td>
-              <td className="border p-2 text-center">${item.descuento}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 };
 
 export default Pedido;
