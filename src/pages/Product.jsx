@@ -1,6 +1,7 @@
 // src/pages/Product.jsx
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useCart } from "../context/CartContext"; z
 
 const API_URL = "http://localhost:8000/api/productos.php"; 
 
@@ -10,6 +11,7 @@ export function Product() {
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addItem, toggleCart } = useCart();
 
   // Obtener el producto por ID
   const fetchProduct = async () => {
@@ -56,6 +58,20 @@ export function Product() {
     return <p className="text-center mt-14 text-gray-600">Producto no encontrado.</p>;
   }
 
+  
+  // Función al presionar el botón
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image
+    });
+
+    toggleCart(); // Opcional: abre el carrito automáticamente
+  };
+
+
   // Render dinámico
   return (
     <main className="max-w-5xl mx-auto py-10 px-6">
@@ -90,6 +106,7 @@ export function Product() {
           </p>
 
           <button
+             onClick={handleAddToCart}
             className="mt-6 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition"
           >
             Agregar al carrito
