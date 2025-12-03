@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API_URL = "http://localhost/backend-tienda/api/registro.php";
+const API_URL = "http://localhost:8000/api/registro.php";
 
 const Registro = () => {
   const [form, setForm] = useState({
@@ -33,7 +33,7 @@ const Registro = () => {
         setForm({
           nombre: "",
           correo: "",
-          contraseña: "",
+          contrasena: "",
           rol_id: "3",
         });
       }
@@ -79,9 +79,9 @@ const Registro = () => {
         <label className="block font-semibold mb-1">Contraseña</label>
         <input
           type="password"
-          name="contraseña"
+          name="contrasena"
           className="w-full border rounded p-2 mb-4"
-          value={form.contraseña}
+          value={form.contrasena}
           onChange={handleChange}
           required
         />
