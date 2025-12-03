@@ -6,8 +6,8 @@ const Registro = () => {
   const [form, setForm] = useState({
     nombre: "",
     correo: "",
-    contraseña: "",
-    rol_id: "1", // cliente por defecto
+    contrasena: "",
+    rol_id: "1", // CLIENTE por defecto y fijo
   });
 
   const [mensaje, setMensaje] = useState("");
@@ -34,7 +34,7 @@ const Registro = () => {
           nombre: "",
           correo: "",
           contrasena: "",
-          rol_id: "3",
+          rol_id: "1",
         });
       }
 
@@ -86,17 +86,8 @@ const Registro = () => {
           required
         />
 
-        <label className="block font-semibold mb-1">Rol</label>
-        <select
-          name="rol_id"
-          className="w-full border rounded p-2 mb-4"
-          value={form.rol_id}
-          onChange={handleChange}
-        >
-          <option value="1">Administrador</option>
-          <option value="2">Empleado</option>
-          <option value="3">Cliente</option>
-        </select>
+        {/* Rol fijo, oculto */}
+        <input type="hidden" name="rol_id" value="1" />
 
         <button
           type="submit"

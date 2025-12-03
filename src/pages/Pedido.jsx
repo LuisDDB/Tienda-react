@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 // Asegúrate de que API_URL se importa correctamente desde tu archivo config
-import { API_URL } from "../config"; 
+const API_URL = "http://localhost:8000/api/registro.php";
 
 const Pedido = () => {
   const [items, setItems] = useState([]);
