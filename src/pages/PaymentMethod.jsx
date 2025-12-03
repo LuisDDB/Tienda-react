@@ -58,7 +58,7 @@ export default function PaymentForm() {
 
           const product = cartItems[0];
 
-          const response = await fetch("http://localhost/api/venta.php", {
+          const response = await fetch("http://localhost:8000/api/venta.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
