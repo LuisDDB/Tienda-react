@@ -1,21 +1,92 @@
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 
 export default function PaymentForm() {
 
-  const [method, setMethod] = useState("card");
+  const [method, setMethod] = useState("paypal");
   const { cartItems } = useCart();
+
+  const [sdkReady, setSdkReady] = useState(false);
 
   const total = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
 
+  // === 1. Cargar SDK de PayPal ===
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = `https://www.paypal.com/sdk/js?client-id=ASoWpLQuioMTUWC_UqMlTh82RVrGU2NO2rqiFBB14zLMLXYrftdpeqmSWtbrUmdABo1QRNt_dcFWej0v&currency=MXN`;
+    script.async = true;
+
+    script.onload = () => {
+      console.log("PayPal SDK cargado");
+      setSdkReady(true);
+    };
+
+    document.body.appendChild(script);
+  }, []);
+
+  // === 2. Renderizar botones PayPal ===
+  useEffect(() => {
+    if (!sdkReady || method !== "paypal") return;
+    if (!window.paypal) return;
+
+    const container = document.getElementById("paypal-btn-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    window.paypal
+      .Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [
+              {
+                amount: { 
+                  value: total.toFixed(2),
+                  currency_code: "MXN"
+                },
+              },
+            ],
+          });
+        },
+
+        onApprove: async (data, actions) => {
+          const order = await actions.order.capture();
+          console.log("ORDER COMPLETADA:", order);
+
+          const product = cartItems[0];
+
+          const response = await fetch("http://localhost/api/venta.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              product_id: product.id,
+              cantidad: product.quantity,
+              paypal_order: order,
+            }),
+          });
+
+          const result = await response.json();
+          console.log("BACKEND RESP:", result);
+
+          alert(result.mensaje || "Pago completado correctamente");
+        },
+
+        onError: (err) => {
+          console.error("PayPal Error:", err);
+          alert("Ocurrió un error con PayPal");
+        },
+      })
+      .render("#paypal-btn-container");
+  }, [sdkReady, method, total, cartItems]);
+
   return (
     <div className="w-full flex justify-center mt-10">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
 
+        {/* === PAGO === */}
         <div className="bg-white p-6 rounded-2xl shadow-md border">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Pagar</h2>
 
@@ -26,6 +97,7 @@ export default function PaymentForm() {
 
           <h3 className="font-bold text-lg mb-2">Método de pago</h3>
 
+          {/* Método tienda */}
           <button
             onClick={() => setMethod("tienda")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border mb-3
@@ -35,84 +107,43 @@ export default function PaymentForm() {
             <span className="font-semibold">Pago en tienda</span>
           </button>
 
-          {
-            method === "tienda" && (
-              <div className="mt-4 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Al seleccionar esta opción se te generará un código de barras que podrás llevar a tu
-                  sucursal más cercana para realizar el pago.
-                  <br /><br />
-                  <span className="font-semibold text-red-600">
-                    Importante:
-                  </span>{" "}
-                  el código tendrá una vigencia de <strong>3 días</strong>. Después de ese tiempo
-                  será inválido y deberás generar uno nuevo.
-                </p>
-              </div>
-            )
-          }
+          {method === "tienda" && (
+            <div className="mt-4 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                Se generará un código de barras válido por 3 días.
+              </p>
+            </div>
+          )}
 
-
+          {/* Método PayPal */}
           <button
-            onClick={() => setMethod("card")}
+            onClick={() => setMethod("paypal")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border mb-4
-                        ${method === "card" ? "border-red-600" : "border-gray-300"}`}
+                        ${method === "paypal" ? "border-red-600" : "border-gray-300"}`}
           >
-            <input type="radio" checked={method === "card"} readOnly />
-            <span className="font-semibold">Tarjeta</span>
+            <input type="radio" checked={method === "paypal"} readOnly />
+            <span className="font-semibold">PayPal</span>
           </button>
 
-          {method === "card" && (
-            <div className="space-y-4">
-
-              <div>
-                <label className="block font-semibold mb-1">Número de tarjeta</label>
-                <input
-                  type="text"
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full border rounded-lg px-3 py-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold mb-1">Fecha de vencimiento</label>
-                  <input placeholder="MM/AA" className="w-full border rounded-lg px-3 py-2" />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1">CVC/CVV</label>
-                  <input placeholder="123" className="w-full border rounded-lg px-3 py-2" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold mb-1">Nombre en la tarjeta</label>
-                  <input placeholder="Juan Pérez" className="w-full border rounded-lg px-3 py-2" />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1">CURP</label>
-                  <input placeholder="CURP" className="w-full border rounded-lg px-3 py-2" />
-                </div>
-              </div>
-
-              <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked />
-                <span>Guardar esta tarjeta</span>
-              </label>
+          {method === "paypal" && (
+            <div className="mt-6">
+              {!sdkReady ? (
+                <p>Cargando PayPal...</p>
+              ) : (
+                <div id="paypal-btn-container"></div>
+              )}
             </div>
           )}
         </div>
 
+        {/* === RESUMEN === */}
         <div className="bg-white p-6 rounded-2xl shadow-md border h-fit">
           <h2 className="text-2xl font-bold mb-4 text-gray-900">
             Resumen del pedido
           </h2>
 
           <div className="space-y-3 mb-4">
-            {cartItems.map(item => (
+            {cartItems.map((item) => (
               <div key={item.id} className="flex justify-between">
                 <span className="font-medium">
                   {item.name} x{item.quantity}
@@ -132,14 +163,14 @@ export default function PaymentForm() {
             Total: <span className="text-red-600">${total.toFixed(2)}</span>
           </p>
 
-          <button
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-lg shadow-md"
-            disabled={cartItems.length === 0}
-          >
-            {method === "tienda" ? "Descargar factura" : 
-            `Pagar $${total.toFixed(2)}`}
-          </button>
-
+          {method === "tienda" && (
+            <button
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-lg shadow-md"
+              disabled={cartItems.length === 0}
+            >
+              Descargar factura
+            </button>
+          )}
         </div>
       </div>
     </div>
