@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 
 export default function PaymentForm() {
-
   const [method, setMethod] = useState("paypal");
-  const { cartItems } = useCart();
-
+  const { cartItems, clearCart } = useCart();
   const [sdkReady, setSdkReady] = useState(false);
 
   const total = cartItems.reduce(
@@ -13,29 +11,25 @@ export default function PaymentForm() {
     0
   );
 
-  // === 1. Cargar SDK de PayPal ===
+  // === 1. Cargar SDK PayPal ===
   useEffect(() => {
     const script = document.createElement("script");
     script.src = `https://www.paypal.com/sdk/js?client-id=ASoWpLQuioMTUWC_UqMlTh82RVrGU2NO2rqiFBB14zLMLXYrftdpeqmSWtbrUmdABo1QRNt_dcFWej0v&currency=MXN`;
     script.async = true;
 
-    script.onload = () => {
-      console.log("PayPal SDK cargado");
-      setSdkReady(true);
-    };
+    script.onload = () => setSdkReady(true);
 
     document.body.appendChild(script);
   }, []);
 
-  // === 2. Renderizar botones PayPal ===
+  // === 2. Renderizar botón PayPal ===
   useEffect(() => {
     if (!sdkReady || method !== "paypal") return;
     if (!window.paypal) return;
 
     const container = document.getElementById("paypal-btn-container");
     if (!container) return;
-
-    container.innerHTML = "";
+    container.innerHTML = ""; // Limpia si se vuelve a renderizar
 
     window.paypal
       .Buttons({
@@ -43,44 +37,78 @@ export default function PaymentForm() {
           return actions.order.create({
             purchase_units: [
               {
-                amount: { 
+                amount: {
                   value: total.toFixed(2),
-                  currency_code: "MXN"
+                  currency_code: "MXN",
                 },
               },
             ],
           });
         },
 
-        onApprove: async (data, actions) => {
-          const order = await actions.order.capture();
-          console.log("ORDER COMPLETADA:", order);
+       onApprove: async (data, actions) => {
+  const order = await actions.order.capture();
+  console.log("ORDER COMPLETADA:", order);
 
-          const product = cartItems[0];
+  // 1️⃣ Generar pedido en tu backend
+  const response = await fetch("http://localhost:8000/api/venta.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      productos: cartItems,
+      paypal_order: order,
+      total: total,
+    }),
+  });
 
-          const response = await fetch("http://localhost:8000/api/venta.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              product_id: product.id,
-              cantidad: product.quantity,
-              paypal_order: order,
-            }),
-          });
+  const result = await response.json();
+  console.log("BACKEND RESP:", result);
 
-          const result = await response.json();
-          console.log("BACKEND RESP:", result);
+  const responsePedido = await fetch("http://localhost:8000/api/pedidos.php", {
+    method: "POST",
+    headers:{"Content-Type": "application/json"},
+    body: JSON.stringify({
+      user_id: 123, // Opcional: ID del usuario logueado. Puede ser null o omitirse si es un invitado.
+        metodo_pago: "Tarjeta de Crédito", // Opcional: Puede ser el ID (e.g., 2) o el nombre del método de pago.
+        impuestos: 1.25, // Opcional: Monto de impuestos predefinido. Si se omite, el backend calcula 16% del subtotal.
 
-          alert(result.mensaje || "Pago completado correctamente");
+        // --- Productos (REQUERIDO) ---
+        productos: cartItems,
+
+        envio: {
+            direccion: "Calle Falsa 123",
+            ciudad: "Springfield",
+            estado_provincia: "Ohio",
+            codigo_postal: "45501",
+            telefono: "555-123-4567",
+            costo_envio: 5.99 
         },
+
+        pago: {
+            monto: total,            
+            estado: "exitoso",       
+            referencia: "TX-987654321" 
+        }
+    })
+  });
+
+  const resultPedido = await responsePedido.json();
+  console.log("BACKEND RESP:", resultPedido);
+  // 2️⃣ Vaciar carrito
+  clearCart();
+
+  // 3️⃣ Redirigir para cerrar PayPal y evitar quedarse en la vista
+  window.location.href = "/pedido"; 
+},
+
 
         onError: (err) => {
           console.error("PayPal Error:", err);
-          alert("Ocurrió un error con PayPal");
+          alert("Error en el pago.");
         },
       })
       .render("#paypal-btn-container");
-  }, [sdkReady, method, total, cartItems]);
+  }, [sdkReady, method, total, cartItems, clearCart]);
 
   return (
     <div className="w-full flex justify-center mt-10">
@@ -101,7 +129,7 @@ export default function PaymentForm() {
           <button
             onClick={() => setMethod("tienda")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border mb-3
-                        ${method === "tienda" ? "border-red-600" : "border-gray-300"}`}
+            ${method === "tienda" ? "border-red-600" : "border-gray-300"}`}
           >
             <input type="radio" checked={method === "tienda"} readOnly />
             <span className="font-semibold">Pago en tienda</span>
@@ -115,11 +143,11 @@ export default function PaymentForm() {
             </div>
           )}
 
-          {/* Método PayPal */}
+          {/* Método Paypal */}
           <button
             onClick={() => setMethod("paypal")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border mb-4
-                        ${method === "paypal" ? "border-red-600" : "border-gray-300"}`}
+            ${method === "paypal" ? "border-red-600" : "border-gray-300"}`}
           >
             <input type="radio" checked={method === "paypal"} readOnly />
             <span className="font-semibold">PayPal</span>
@@ -163,14 +191,6 @@ export default function PaymentForm() {
             Total: <span className="text-red-600">${total.toFixed(2)}</span>
           </p>
 
-          {method === "tienda" && (
-            <button
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-lg shadow-md"
-              disabled={cartItems.length === 0}
-            >
-              Descargar factura
-            </button>
-          )}
         </div>
       </div>
     </div>
