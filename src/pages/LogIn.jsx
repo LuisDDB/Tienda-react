@@ -1,11 +1,60 @@
-import { Button } from "../components/Button"; 
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+// import { Button } from "../components/Button"; // <-- COMENTADO para usar botón nativo
+
+// URL de tu API de Login (Asegúrate de que el servidor PHP esté en el puerto 8000)
+const API_URL = "http://localhost:8000/api/login.php"; 
 
 export function LogIn() {
-  
-  const handleSubmit = (e) => {
+  // 1. ESTADO PARA LOS DATOS DEL FORMULARIO
+  const [form, setForm] = useState({
+    correo: "",
+    contrasena: "", 
+  });
+
+  // 2. ESTADO PARA MENSAJES DE RESPUESTA
+  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // MANEJADOR DE CAMBIOS: Actualiza el estado cuando el usuario escribe
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // MANEJADOR DE ENVÍO: Conexión con la API
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Formulario de login enviado!");
+    
+    // --- PASO DE DIAGNÓSTICO ---
+    console.log("-> Función handleSubmit iniciada. Intentando conectar a la API..."); 
+    // ---------------------------
+    
+    setLoading(true);
+    setMensaje(""); // Limpiar mensajes anteriores
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form), 
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) { // Código 200 (Login Exitoso)
+        setMensaje(`¡Bienvenido, ${data.nombre}! Sesión iniciada.`);
+        console.log("Datos del usuario:", data);
+      } else {
+        // 400 (Datos faltantes) o 401 (Credenciales inválidas)
+        setMensaje(data.mensaje || "Error desconocido al iniciar sesión.");
+      }
+
+    } catch (error) {
+      console.error("Error de conexión:", error);
+      setMensaje("No se pudo conectar con el servidor de la API.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -18,46 +67,62 @@ export function LogIn() {
           Iniciar Sesión
         </h2>
 
+        {/* MENSAJE DE RESPUESTA */}
+        {mensaje && (
+          <p className={`text-center font-semibold ${
+            mensaje.includes("exitoso") || mensaje.includes("Bienvenido") ? "text-green-500" : "text-red-500"
+          }`}>
+            {mensaje}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Email */}
+          {/* Email Input */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <label htmlFor="correo" className="block text-sm font-medium text-gray-300">
               Correo Electrónico
             </label>
             <input
-              id="email"
-              name="email"
+              id="correo"
+              name="correo"
               type="email"
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
               placeholder="nombre@ejemplo.com"
+              value={form.correo}
+              onChange={handleChange}
             />
           </div>
 
-          {/* Password */}
+          {/* Password Input */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+            <label htmlFor="contrasena" className="block text-sm font-medium text-gray-300">
               Contraseña
             </label>
             <input
-              id="password"
-              name="password"
+              id="contrasena"
+              name="contrasena"
               type="password"
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
               placeholder="Ingresa tu contraseña"
+              value={form.contrasena}
+              onChange={handleChange}
             />
           </div>
 
-          {/* Botón */}
+          {/* Botón (HEMOS REEMPLAZADO EL COMPONENTE CUSTOM CON HTML NATIVO PARA LA PRUEBA) */}
           <div>
-            <Button
-              txt="Entrar"
+            <button
               type="submit"
-              styles="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            />
+              disabled={loading}
+              className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-800"
+            >
+              {loading ? "Cargando..." : "Entrar"}
+            </button>
           </div>
+          
         </form>
 
         {/* Link a Registro */}
