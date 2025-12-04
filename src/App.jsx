@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
+import PrivateRoute from "./components/PrivateRoute";
 
 // Pages
 import { Home } from "./pages/Home";
@@ -23,11 +24,26 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<Product />} />
-            <Route path="/checkout/payment" element={<PaymentMethod />} />
             <Route path="/login" element={<LogIn />} />
-            <Route path="/pedido" element={<Pedido />} />
             <Route path="/registro" element={<Registro />} />
 
+            <Route
+              path="/checkout/payment"
+              element={
+                <PrivateRoute>
+                  <PaymentMethod />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/pedido"
+              element={
+                <PrivateRoute>
+                  <Pedido />
+                </PrivateRoute>
+              }
+            />
           </Routes>
 
         </main>

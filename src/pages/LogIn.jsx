@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
 // import { Button } from "../components/Button"; // <-- COMENTADO para usar botón nativo
 
 // URL de tu API de Login (Asegúrate de que el servidor PHP esté en el puerto 8000)
 const API_URL = "http://localhost:8000/api/login.php"; 
 
 export function LogIn() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from || "/";
+
   // 1. ESTADO PARA LOS DATOS DEL FORMULARIO
   const [form, setForm] = useState({
     correo: "",
@@ -44,6 +50,10 @@ export function LogIn() {
       if (res.ok) { // Código 200 (Login Exitoso)
         setMensaje(`¡Bienvenido, ${data.nombre}! Sesión iniciada.`);
         console.log("Datos del usuario:", data);
+        localStorage.setItem("userId", data.user_id);
+        localStorage.setItem("isLogged", "true");
+        navigate(from, { replace: true });
+
       } else {
         // 400 (Datos faltantes) o 401 (Credenciales inválidas)
         setMensaje(data.mensaje || "Error desconocido al iniciar sesión.");
